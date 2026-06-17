@@ -1,4 +1,3 @@
-app_code = '''
 import streamlit as st
 import pickle, re, random, time
 import pandas as pd
@@ -12,9 +11,11 @@ def load_models():
     lr    = pickle.load(open("lr_model.pkl",         "rb"))
     nb    = pickle.load(open("nb_model.pkl",         "rb"))
     tfidf = pickle.load(open("tfidf_vectorizer.pkl", "rb"))
-    nlp   = spacy.load("en_core_web_sm", disable=["parser", "ner"])
     nltk.download("stopwords", quiet=True)
-    stops = set(nltk.corpus.stopwords.words("english"))
+    nltk.download("punkt", quiet=True)
+    nlp   = spacy.load("en_core_web_sm", disable=["parser", "ner"])
+    from nltk.corpus import stopwords
+    stops = set(stopwords.words("english"))
     return lr, nb, tfidf, nlp, stops
 
 lr_model, nb_model, tfidf_vec, nlp, stop_words = load_models()
@@ -22,10 +23,10 @@ lr_model, nb_model, tfidf_vec, nlp, stop_words = load_models()
 def clean_tweet(text):
     if not isinstance(text, str): return ""
     text = text.lower()
-    text = re.sub(r"http\\S+|www\\S+", "", text)
-    text = re.sub(r"@\\w+", "", text)
-    text = re.sub(r"#(\\w+)", r"\\1", text)
-    text = re.sub(r"[^a-z\\s]", "", text)
+    text = re.sub(r"http\S+|www\S+", "", text)
+    text = re.sub(r"@\w+", "", text)
+    text = re.sub(r"#(\w+)", r"\1", text)
+    text = re.sub(r"[^a-z\s]", "", text)
     doc  = nlp(text)
     return " ".join(t.lemma_ for t in doc
                     if t.text not in stop_words and not t.is_space)
@@ -67,7 +68,7 @@ with tab1:
     user_text = st.text_area("Enter a tweet:",
                              "The service was absolutely amazing! 10/10 would recommend.",
                              height=100)
-    if st.button("Analyse Sentiment", type="primary"):
+    if st.button("🔍 Analyse Sentiment", type="primary"):
         with st.spinner("Analysing..."):
             results = predict(user_text)
         col1, col2 = st.columns(2)
@@ -87,7 +88,7 @@ with tab1:
 with tab2:
     st.subheader("Simulate an incoming tweet feed")
     n_tweets = st.slider("Number of tweets to simulate", 5, 30, 15)
-    if st.button("▶ Run Simulation", type="primary"):
+    if st.button("Run Simulation", type="primary"):
         history   = []
         chart_box = st.empty()
         prog      = st.progress(0)
@@ -95,14 +96,18 @@ with tab2:
             tweet  = random.choice(SAMPLE_TWEETS)
             result = predict(tweet)
             label  = result["lr"]["label"]
-            history.append({"Tweet #": i+1, "Tweet": tweet[:60], "Sentiment": label})
+            history.append({"Tweet #": i+1,
+                            "Tweet": tweet[:60],
+                            "Sentiment": label})
             df_hist = pd.DataFrame(history)
             counts  = df_hist["Sentiment"].value_counts().reset_index()
             counts.columns = ["Sentiment", "Count"]
             colors = {"Positive": "#22c55e", "Negative": "#ef4444"}
             fig = px.pie(counts, names="Sentiment", values="Count",
-                         title=f"Sentiment distribution — {i+1} tweets",
-                         color="Sentiment", color_discrete_map=colors, hole=0.4)
+                         title=f"Sentiment — {i+1} tweets processed",
+                         color="Sentiment",
+                         color_discrete_map=colors,
+                         hole=0.4)
             with chart_box.container():
                 col_a, col_b = st.columns([1, 1])
                 with col_a:
@@ -112,7 +117,7 @@ with tab2:
                                  use_container_width=True, height=300)
             prog.progress((i+1)/n_tweets)
             time.sleep(0.3)
-        st.success(f"Simulation complete!")
+        st.success("Simulation complete!")
 
 with tab3:
     st.subheader("Model performance comparison")
@@ -124,8 +129,8 @@ with tab3:
         "Interpretable":  ["Yes", "Yes"],
     })
     st.dataframe(comp, use_container_width=True, hide_index=True)
-    st.info("Logistic Regression wins — fast, interpretable, and accurate.")
-    st.success("Next step: Fine-tune BERTweet transformer for 90%+ accuracy.")
+    st.info("Logistic Regression wins — fast, interpretable, and 82% accurate.")
+    st.success("Next upgrade: BERTweet transformer for 90%+ accuracy.")
     st.markdown("### Confusion Matrices")
     col1, col2 = st.columns(2)
     with col1:
@@ -134,9 +139,3 @@ with tab3:
     with col2:
         st.image("lstm_training_curves.png",
                  caption="LSTM Training Curves", use_column_width=True)
-'''
-
-with open('app.py', 'w') as f:
-    f.write(app_code)
-
-print("New app.py created!")
