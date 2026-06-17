@@ -61,7 +61,7 @@ SAMPLE_TWEETS = [
     "Crew was super friendly and helpful throughout the flight!",
 ]
 
-st.title("🔍 BrandPulse AI")
+st.title(" BrandPulse AI")
 st.markdown("**Real-time Tweet Sentiment Analysis** — Classical NLP")
 st.divider()
 
@@ -73,7 +73,7 @@ with tab1:
         "Enter a tweet:",
         "The service was absolutely amazing! 10/10 would recommend.",
         height=100)
-    if st.button("🔍 Analyse Sentiment", type="primary"):
+    if st.button("Analyse Sentiment", type="primary"):
         with st.spinner("Analysing..."):
             results = predict(user_text)
         col1, col2 = st.columns(2)
