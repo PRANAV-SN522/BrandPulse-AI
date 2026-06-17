@@ -21,42 +21,73 @@ st.set_page_config(
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-    .main { background-color: #0f172a; }
-    .block-container { padding-top: 2rem; }
-    .metric-card {
-        background: linear-gradient(135deg, #1e293b, #0f172a);
+    .block-container { padding-top: 1rem; }
+    .hero-banner {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 20px;
+        border-radius: 16px;
+        padding: 30px 40px;
+        margin-bottom: 20px;
         text-align: center;
-        margin: 8px 0;
     }
-    .positive { border-left: 4px solid #22c55e !important; }
-    .negative { border-left: 4px solid #ef4444 !important; }
     .hero-title {
-        font-size: 3rem;
+        font-size: 2.8rem;
         font-weight: 800;
         background: linear-gradient(90deg, #3b82f6, #8b5cf6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-align: center;
+        display: block;
+        margin-bottom: 8px;
     }
     .hero-sub {
-        text-align: center;
         color: #94a3b8;
         font-size: 1.1rem;
-        margin-bottom: 2rem;
     }
     .stat-box {
         background: #1e293b;
-        border-radius: 10px;
-        padding: 15px;
+        border-radius: 12px;
+        padding: 20px;
         text-align: center;
         border: 1px solid #334155;
+        height: 100%;
     }
+    .stat-box h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #3b82f6;
+        margin: 0;
+    }
+    .stat-box p {
+        color: #94a3b8;
+        margin: 4px 0 0 0;
+        font-size: 0.9rem;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        margin: 8px 0;
+    }
+    .metric-card h4 { color: #94a3b8; margin: 0 0 8px 0; }
+    .metric-card h2 { margin: 0 0 4px 0; font-size: 1.8rem; }
+    .metric-card p  { color: #64748b; margin: 0; font-size: 0.9rem; }
+    .model-box {
+        background: #1e293b;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid #334155;
+        height: 100%;
+    }
+    .model-box h3 { margin: 0 0 8px 0; }
+    .model-box h2 { margin: 0 0 4px 0; font-size: 2rem; }
+    .model-box p  { color: #94a3b8; margin: 0; font-size: 0.85rem; }
 </style>
 """, unsafe_allow_html=True)
 
+# ── Load models ───────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_models():
     lr    = pickle.load(open("lr_model.pkl",         "rb"))
@@ -68,6 +99,7 @@ lr_model, nb_model, tfidf_vec = load_models()
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words("english"))
 
+# ── Clean & predict ───────────────────────────────────────────────────────────
 def clean_tweet(text):
     if not isinstance(text, str): return ""
     text = text.lower()
@@ -109,17 +141,17 @@ SAMPLE_TWEETS = [
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.image("https://img.icons8.com/fluency/96/search.png", width=60)
-    st.title("BrandPulse AI")
+    st.markdown("## 🔍 BrandPulse AI")
     st.markdown("---")
     st.markdown("### 📊 About")
     st.info(
-        "BrandPulse AI analyses tweet sentiment using "
-        "Classical NLP models trained on 100,000 real tweets."
+        "BrandPulse AI analyses tweet sentiment "
+        "using Classical NLP models trained on "
+        "100,000 real tweets from Sentiment140."
     )
     st.markdown("### 🛠️ Tech Stack")
     st.markdown("""
-    - 🐍 Python
+    - 🐍 Python 3.11
     - 📊 Scikit-learn
     - 🌊 Streamlit
     - 📈 Plotly
@@ -131,104 +163,125 @@ with st.sidebar:
     |-------|----------|
     | Logistic Regression | 82% |
     | Naïve Bayes | 80% |
+    | BiLSTM (CPU) | 76% |
     """)
     st.markdown("---")
-    st.caption("Built by PRANAV-SN522 • NLP Internship Project")
+    st.caption("Built by PRANAV-SN522")
+    st.caption("NLP Internship Project 2026")
 
-# ── Hero Header ───────────────────────────────────────────────────────────────
-st.markdown('<p class="hero-title">🔍 BrandPulse AI</p>', unsafe_allow_html=True)
-st.markdown(
-    '<p class="hero-sub">Real-time Tweet Sentiment Analysis powered by Classical NLP</p>',
-    unsafe_allow_html=True)
+# ── Hero Banner ───────────────────────────────────────────────────────────────
+st.markdown("""
+<div class="hero-banner">
+    <span class="hero-title">🔍 BrandPulse AI</span>
+    <p class="hero-sub">Real-time Tweet Sentiment Analysis powered by Classical NLP</p>
+    <p class="hero-sub">Trained on 100,000 tweets · Logistic Regression · Naïve Bayes · BiLSTM</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ── Stats Row ─────────────────────────────────────────────────────────────────
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.markdown('<div class="stat-box"><h2>100K</h2><p>Tweets Trained</p></div>',
+c1, c2, c3, c4 = st.columns(4)
+with c1:
+    st.markdown('<div class="stat-box"><h2>100K</h2><p>Tweets Trained On</p></div>',
                 unsafe_allow_html=True)
-with col2:
+with c2:
     st.markdown('<div class="stat-box"><h2>82%</h2><p>Best Accuracy</p></div>',
                 unsafe_allow_html=True)
-with col3:
-    st.markdown('<div class="stat-box"><h2>2</h2><p>ML Models</p></div>',
+with c3:
+    st.markdown('<div class="stat-box"><h2>2</h2><p>Live ML Models</p></div>',
                 unsafe_allow_html=True)
-with col4:
-    st.markdown('<div class="stat-box"><h2>Live</h2><p>Predictions</p></div>',
+with c4:
+    st.markdown('<div class="stat-box"><h2>⚡</h2><p>Real-time Predictions</p></div>',
                 unsafe_allow_html=True)
 
+st.markdown("<br>", unsafe_allow_html=True)
 st.divider()
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["💬 Live Predict", "📡 Simulate Feed", "📊 Model Comparison"])
+tab1, tab2, tab3 = st.tabs([
+    "💬  Live Predict",
+    "📡  Simulate Feed",
+    "📊  Model Comparison"
+])
 
 # ═══════════════════════════════════════════════════════
-# TAB 1
+# TAB 1 — Live Predict
 # ═══════════════════════════════════════════════════════
 with tab1:
     st.subheader("💬 Analyse any tweet instantly")
-    st.markdown("Type or paste any tweet below and get instant sentiment predictions.")
+    st.markdown("Type or paste any tweet below and get instant sentiment predictions from 2 models.")
+    st.markdown("")
 
     col_input, col_examples = st.columns([2, 1])
+
     with col_input:
         user_text = st.text_area(
-            "Enter a tweet:",
+            "✏️ Enter a tweet:",
             "The service was absolutely amazing! 10/10 would recommend.",
-            height=120)
-        analyse_btn = st.button("🔍 Analyse Sentiment", type="primary", use_container_width=True)
+            height=130,
+            placeholder="Type any tweet here..."
+        )
+        analyse_btn = st.button(
+            "🔍 Analyse Sentiment",
+            type="primary",
+            use_container_width=True
+        )
 
     with col_examples:
-        st.markdown("**💡 Try these examples:**")
+        st.markdown("**💡 Quick examples — click to try:**")
+        st.markdown("")
         examples = [
-            "Amazing flight experience!",
-            "Worst airline ever, avoid!",
-            "The flight was delayed again",
-            "Staff were so helpful today",
+            "Amazing flight, loved every moment!",
+            "Worst airline ever, never again!",
+            "The flight was delayed by 3 hours.",
+            "Staff were so kind and helpful!",
         ]
         for ex in examples:
-            if st.button(ex, use_container_width=True):
+            if st.button(ex, use_container_width=True, key=ex):
                 user_text = ex
 
-    if analyse_btn:
+    if analyse_btn and user_text:
         with st.spinner("🧠 Analysing sentiment..."):
             results = predict(user_text)
-            time.sleep(0.5)
+            time.sleep(0.4)
 
-        st.markdown("### 🎯 Results")
-        col1, col2 = st.columns(2)
+        st.markdown("---")
+        st.markdown("### 🎯 Prediction Results")
 
         lr_color = "#22c55e" if results["lr"]["pred"] == 1 else "#ef4444"
         nb_color = "#22c55e" if results["nb"]["pred"] == 1 else "#ef4444"
 
+        col1, col2 = st.columns(2)
         with col1:
             st.markdown(f"""
-            <div class="metric-card" style="border-left: 4px solid {lr_color}">
-                <h4 style="color:#94a3b8">Logistic Regression</h4>
+            <div class="metric-card" style="border-left:5px solid {lr_color}">
+                <h4>🤖 Logistic Regression</h4>
                 <h2 style="color:{lr_color}">{results['lr']['label']}</h2>
-                <p style="color:#64748b">Confidence: {results['lr']['conf']:.1%}</p>
+                <p>Confidence: <strong>{results['lr']['conf']:.1%}</strong></p>
             </div>
             """, unsafe_allow_html=True)
-
         with col2:
             st.markdown(f"""
-            <div class="metric-card" style="border-left: 4px solid {nb_color}">
-                <h4 style="color:#94a3b8">Naïve Bayes</h4>
+            <div class="metric-card" style="border-left:5px solid {nb_color}">
+                <h4>📊 Naïve Bayes</h4>
                 <h2 style="color:{nb_color}">{results['nb']['label']}</h2>
-                <p style="color:#64748b">Confidence: {results['nb']['conf']:.1%}</p>
+                <p>Confidence: <strong>{results['nb']['conf']:.1%}</strong></p>
             </div>
             """, unsafe_allow_html=True)
 
+        st.markdown("")
         if results["lr"]["label"] == results["nb"]["label"]:
             st.success("✅ Both models agree on the sentiment!")
         else:
-            st.warning("⚠️ Models disagree — this tweet may be ambiguous or sarcastic.")
+            st.warning("⚠️ Models disagree — this tweet may be sarcastic or ambiguous.")
 
-        # Confidence bar chart
+        # Confidence chart
         fig = go.Figure(go.Bar(
             x=["Logistic Regression", "Naïve Bayes"],
-            y=[results["lr"]["conf"] * 100, results["nb"]["conf"] * 100],
+            y=[results["lr"]["conf"]*100, results["nb"]["conf"]*100],
             marker_color=[lr_color, nb_color],
             text=[f"{results['lr']['conf']:.1%}", f"{results['nb']['conf']:.1%}"],
-            textposition="auto"
+            textposition="auto",
+            width=0.4
         ))
         fig.update_layout(
             title="Model Confidence Comparison",
@@ -237,27 +290,31 @@ with tab1:
             plot_bgcolor="#1e293b",
             paper_bgcolor="#0f172a",
             font_color="#94a3b8",
-            height=300
+            height=320,
+            margin=dict(t=40, b=20)
         )
         st.plotly_chart(fig, use_container_width=True)
 
 # ═══════════════════════════════════════════════════════
-# TAB 2
+# TAB 2 — Simulate Feed
 # ═══════════════════════════════════════════════════════
 with tab2:
     st.subheader("📡 Simulate a live tweet feed")
-    st.markdown("Simulate incoming tweets and watch the sentiment distribution update in real time.")
+    st.markdown("Watch the sentiment distribution update in real time as tweets stream in.")
+    st.markdown("")
 
     col_a, col_b = st.columns([1, 2])
     with col_a:
-        n_tweets = st.slider("Number of tweets", 5, 30, 15)
-        speed    = st.selectbox("Speed", ["Slow", "Normal", "Fast"])
-        delay    = {"Slow": 0.8, "Normal": 0.3, "Fast": 0.1}[speed]
-
+        n_tweets = st.slider("📊 Number of tweets", 5, 30, 15)
+        speed    = st.selectbox("⚡ Simulation speed", ["Slow", "Normal", "Fast"])
+        delay    = {"Slow": 0.8, "Normal": 0.35, "Fast": 0.1}[speed]
     with col_b:
-        st.info(f"Will simulate **{n_tweets} tweets** at **{speed}** speed. Click Run to start!")
+        st.info(
+            f"Will simulate **{n_tweets} tweets** at **{speed}** speed.\n\n"
+            f"Watch the pie chart update live as each tweet is classified!"
+        )
 
-    if st.button("▶ Run Simulation", type="primary"):
+    if st.button("▶  Run Simulation", type="primary", use_container_width=True):
         history   = []
         chart_box = st.empty()
         prog      = st.progress(0)
@@ -268,9 +325,9 @@ with tab2:
             result = predict(tweet)
             label  = result["lr"]["label"]
             history.append({
-                "Tweet #":   i + 1,
-                "Tweet":     tweet[:55] + "..." if len(tweet) > 55 else tweet,
-                "Sentiment": label,
+                "Tweet #":    i + 1,
+                "Tweet":      tweet[:55] + "..." if len(tweet) > 55 else tweet,
+                "Sentiment":  label,
                 "Confidence": f"{result['lr']['conf']:.0%}"
             })
             df_hist = pd.DataFrame(history)
@@ -278,76 +335,106 @@ with tab2:
             counts.columns = ["Sentiment", "Count"]
             colors  = {"😊 Positive": "#22c55e", "😠 Negative": "#ef4444"}
 
-            fig = px.pie(counts, names="Sentiment", values="Count",
-                         title=f"Live Sentiment — {i+1}/{n_tweets} tweets",
-                         color="Sentiment", color_discrete_map=colors, hole=0.45)
+            fig = px.pie(
+                counts, names="Sentiment", values="Count",
+                title=f"Live Sentiment Distribution — {i+1}/{n_tweets} tweets",
+                color="Sentiment", color_discrete_map=colors, hole=0.45
+            )
             fig.update_layout(
                 plot_bgcolor="#1e293b", paper_bgcolor="#0f172a",
-                font_color="#94a3b8", height=350,
-                legend=dict(orientation="h", yanchor="bottom", y=-0.2)
+                font_color="#94a3b8", height=380,
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2),
+                margin=dict(t=50, b=60)
             )
-            fig.update_traces(textposition="inside", textinfo="percent+label")
+            fig.update_traces(
+                textposition="inside",
+                textinfo="percent+label",
+                textfont_size=14
+            )
 
             with chart_box.container():
-                c1, c2 = st.columns([1, 1])
-                with c1:
+                ca, cb = st.columns([1, 1])
+                with ca:
                     st.plotly_chart(fig, use_container_width=True)
-                with c2:
+                with cb:
                     st.dataframe(
                         df_hist[["Tweet #", "Tweet", "Sentiment", "Confidence"]],
-                        use_container_width=True, height=350)
+                        use_container_width=True,
+                        height=380
+                    )
 
             prog.progress((i + 1) / n_tweets)
-            status.markdown(f"Processing tweet **{i+1}** of **{n_tweets}**...")
+            status.markdown(f"⏳ Processing tweet **{i+1}** of **{n_tweets}**...")
             time.sleep(delay)
 
         status.empty()
         pos = sum(1 for h in history if h["Sentiment"] == "😊 Positive")
         neg = n_tweets - pos
-        st.success(f"✅ Done! **{pos} Positive** and **{neg} Negative** out of {n_tweets} tweets.")
+        st.balloons()
+        st.success(
+            f"✅ Simulation complete! "
+            f"**{pos} Positive 😊** and **{neg} Negative 😠** "
+            f"out of {n_tweets} tweets."
+        )
 
 # ═══════════════════════════════════════════════════════
-# TAB 3
+# TAB 3 — Model Comparison
 # ═══════════════════════════════════════════════════════
 with tab3:
     st.subheader("📊 Model Performance Comparison")
+    st.markdown("Comparing Classical NLP vs Deep Learning approaches.")
+    st.markdown("")
 
+    # Model cards
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
-        <div class="stat-box">
+        <div class="model-box" style="border-top:4px solid #3b82f6">
             <h3 style="color:#3b82f6">Logistic Regression</h3>
             <h2 style="color:#22c55e">82%</h2>
-            <p>Accuracy</p>
-            <p style="color:#94a3b8">F1: 0.82 | Time: &lt;1 min</p>
+            <p>Accuracy</p><br>
+            <p>F1-Score: <strong>0.82</strong></p>
+            <p>Train Time: <strong>&lt; 1 min</strong></p>
+            <p>Interpretable: <strong>✅ Yes</strong></p>
+            <p>Context-aware: <strong>❌ No</strong></p>
         </div>
         """, unsafe_allow_html=True)
     with col2:
         st.markdown("""
-        <div class="stat-box">
+        <div class="model-box" style="border-top:4px solid #8b5cf6">
             <h3 style="color:#8b5cf6">Naïve Bayes</h3>
             <h2 style="color:#22c55e">80%</h2>
-            <p>Accuracy</p>
-            <p style="color:#94a3b8">F1: 0.80 | Time: &lt;30 sec</p>
+            <p>Accuracy</p><br>
+            <p>F1-Score: <strong>0.80</strong></p>
+            <p>Train Time: <strong>&lt; 30 sec</strong></p>
+            <p>Interpretable: <strong>✅ Yes</strong></p>
+            <p>Context-aware: <strong>❌ No</strong></p>
         </div>
         """, unsafe_allow_html=True)
     with col3:
         st.markdown("""
-        <div class="stat-box">
+        <div class="model-box" style="border-top:4px solid #f59e0b">
             <h3 style="color:#f59e0b">BiLSTM</h3>
             <h2 style="color:#f59e0b">76%</h2>
-            <p>Accuracy</p>
-            <p style="color:#94a3b8">F1: 0.76 | Time: ~8 min</p>
+            <p>Accuracy</p><br>
+            <p>F1-Score: <strong>0.76</strong></p>
+            <p>Train Time: <strong>~8 min CPU</strong></p>
+            <p>Interpretable: <strong>❌ No</strong></p>
+            <p>Context-aware: <strong>✅ Yes</strong></p>
         </div>
         """, unsafe_allow_html=True)
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Bar chart
     st.markdown("### 📈 Accuracy Comparison")
     fig = go.Figure(go.Bar(
         x=["Logistic Regression", "Naïve Bayes", "BiLSTM (CPU)"],
         y=[82, 80, 76],
         marker_color=["#3b82f6", "#8b5cf6", "#f59e0b"],
         text=["82%", "80%", "76%"],
-        textposition="auto"
+        textposition="outside",
+        width=0.5
     ))
     fig.update_layout(
         yaxis_range=[70, 90],
@@ -355,34 +442,38 @@ with tab3:
         plot_bgcolor="#1e293b",
         paper_bgcolor="#0f172a",
         font_color="#94a3b8",
-        height=350
+        height=380,
+        margin=dict(t=30, b=30)
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("### 🔍 Detailed Comparison")
+    # Table
+    st.markdown("### 🔍 Full Comparison Table")
     comp = pd.DataFrame({
-        "Model":         ["Logistic Regression", "Naïve Bayes", "BiLSTM"],
-        "Accuracy":      ["82%", "80%", "76%"],
-        "F1-Score":      ["0.82", "0.80", "0.76"],
-        "Train Time":    ["< 1 min", "< 30 sec", "~8 min CPU"],
-        "Interpretable": ["✅ Yes", "✅ Yes", "❌ No"],
-        "Context":       ["❌ No", "❌ No", "✅ Yes"],
+        "Model":            ["Logistic Regression", "Naïve Bayes", "BiLSTM"],
+        "Accuracy":         ["82%", "80%", "76%"],
+        "F1-Score":         ["0.82", "0.80", "0.76"],
+        "Training Time":    ["< 1 min", "< 30 sec", "~8 min CPU"],
+        "Interpretable":    ["✅ Yes", "✅ Yes", "❌ No"],
+        "Context-aware":    ["❌ No", "❌ No", "✅ Yes"],
+        "Best for":         ["Production", "Quick baseline", "Large datasets"],
     })
     st.dataframe(comp, use_container_width=True, hide_index=True)
 
+    # Images
     st.markdown("### 📸 Confusion Matrices")
-    col1, col2 = st.columns(2)
-    with col1:
+    ci1, ci2 = st.columns(2)
+    with ci1:
         st.image("confusion_matrices_classical.png",
                  caption="Classical Models — Logistic Regression & Naïve Bayes",
                  use_column_width=True)
-    with col2:
+    with ci2:
         st.image("lstm_training_curves.png",
-                 caption="BiLSTM Training Curves",
+                 caption="BiLSTM Training Curves — Accuracy & Loss",
                  use_column_width=True)
 
+    # Insights
     st.markdown("### 💡 Key Insights")
-    st.info("🏆 **Logistic Regression wins** on 100k tweets — fast, interpretable, and 82% accurate.")
-    st.warning("🧠 **BiLSTM needs more data** — it would improve significantly with 1M+ tweets and GPU training.")
-    st.success("🚀 **Next step** — Fine-tune BERTweet (transformer pretrained on tweets) to push accuracy above 90%.")
-
+    st.info("🏆 **Winner: Logistic Regression** — 82% accuracy, fastest training, fully interpretable.")
+    st.warning("🧠 **BiLSTM potential** — Needs 1M+ tweets and GPU training to outperform classical models.")
+    st.success("🚀 **Future upgrade** — Fine-tune BERTweet transformer to push accuracy above 90%.")
