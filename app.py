@@ -2,7 +2,13 @@ import streamlit as st
 import pickle, re, random, time
 import pandas as pd
 import plotly.express as px
-import nltk, spacy
+import nltk
+
+nltk.download("stopwords", quiet=True)
+nltk.download("wordnet", quiet=True)
+nltk.download("omw-1.4", quiet=True)
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
 st.set_page_config(page_title="BrandPulse AI", page_icon="🔍", layout="wide")
 
@@ -11,14 +17,11 @@ def load_models():
     lr    = pickle.load(open("lr_model.pkl",         "rb"))
     nb    = pickle.load(open("nb_model.pkl",         "rb"))
     tfidf = pickle.load(open("tfidf_vectorizer.pkl", "rb"))
-    nltk.download("stopwords", quiet=True)
-    nltk.download("punkt", quiet=True)
-    nlp   = spacy.load("en_core_web_sm", disable=["parser", "ner"])
-    from nltk.corpus import stopwords
-    stops = set(stopwords.words("english"))
-    return lr, nb, tfidf, nlp, stops
+    return lr, nb, tfidf
 
-lr_model, nb_model, tfidf_vec, nlp, stop_words = load_models()
+lr_model, nb_model, tfidf_vec = load_models()
+lemmatizer = WordNetLemmatizer()
+stop_words = set(stopwords.words("english"))
 
 def clean_tweet(text):
     if not isinstance(text, str): return ""
@@ -27,14 +30,15 @@ def clean_tweet(text):
     text = re.sub(r"@\w+", "", text)
     text = re.sub(r"#(\w+)", r"\1", text)
     text = re.sub(r"[^a-z\s]", "", text)
-    doc  = nlp(text)
-    return " ".join(t.lemma_ for t in doc
-                    if t.text not in stop_words and not t.is_space)
+    tokens = text.split()
+    tokens = [lemmatizer.lemmatize(t) for t in tokens
+              if t not in stop_words and len(t) > 1]
+    return " ".join(tokens)
 
 def predict(raw_text):
     cleaned = clean_tweet(raw_text)
     vec     = tfidf_vec.transform([cleaned])
-    labels  = {0: "Negative", 1: "Positive"}
+    labels  = {0: "😠 Negative", 1: "😊 Positive"}
     lr_pred = int(lr_model.predict(vec)[0])
     lr_prob = float(lr_model.predict_proba(vec)[0].max())
     nb_pred = int(nb_model.predict(vec)[0])
@@ -51,7 +55,7 @@ SAMPLE_TWEETS = [
     "Best travel experience ever, will definitely fly again!",
     "Lost my luggage. This is the worst airline ever.",
     "On-time departure, comfy seats. Happy traveller here.",
-    "The food was terrible and the seats were so uncomfortable.",
+    "The food was terrible and seats were so uncomfortable.",
     "Thank you for the amazing service today!",
     "Stuck on the tarmac for 2 hours. No updates from crew.",
     "Crew was super friendly and helpful throughout the flight!",
@@ -61,13 +65,14 @@ st.title("🔍 BrandPulse AI")
 st.markdown("**Real-time Tweet Sentiment Analysis** — Classical NLP")
 st.divider()
 
-tab1, tab2, tab3 = st.tabs(["Live Predict", "Simulate Feed", "Model Comparison"])
+tab1, tab2, tab3 = st.tabs(["💬 Live Predict", "📡 Simulate Feed", "📊 Model Comparison"])
 
 with tab1:
     st.subheader("Analyse any tweet instantly")
-    user_text = st.text_area("Enter a tweet:",
-                             "The service was absolutely amazing! 10/10 would recommend.",
-                             height=100)
+    user_text = st.text_area(
+        "Enter a tweet:",
+        "The service was absolutely amazing! 10/10 would recommend.",
+        height=100)
     if st.button("🔍 Analyse Sentiment", type="primary"):
         with st.spinner("Analysing..."):
             results = predict(user_text)
@@ -81,14 +86,14 @@ with tab1:
                       results["nb"]["label"],
                       f"{results['nb']['conf']:.0%} confidence")
         if results["lr"]["label"] == results["nb"]["label"]:
-            st.success("Both models agree!")
+            st.success("✅ Both models agree!")
         else:
-            st.warning("Models disagree — tweet may be ambiguous.")
+            st.warning("⚠️ Models disagree — tweet may be ambiguous.")
 
 with tab2:
     st.subheader("Simulate an incoming tweet feed")
     n_tweets = st.slider("Number of tweets to simulate", 5, 30, 15)
-    if st.button("Run Simulation", type="primary"):
+    if st.button("▶ Run Simulation", type="primary"):
         history   = []
         chart_box = st.empty()
         prog      = st.progress(0)
@@ -96,13 +101,15 @@ with tab2:
             tweet  = random.choice(SAMPLE_TWEETS)
             result = predict(tweet)
             label  = result["lr"]["label"]
-            history.append({"Tweet #": i+1,
-                            "Tweet": tweet[:60],
-                            "Sentiment": label})
+            history.append({
+                "Tweet #":   i + 1,
+                "Tweet":     tweet[:60],
+                "Sentiment": label
+            })
             df_hist = pd.DataFrame(history)
             counts  = df_hist["Sentiment"].value_counts().reset_index()
             counts.columns = ["Sentiment", "Count"]
-            colors = {"Positive": "#22c55e", "Negative": "#ef4444"}
+            colors = {"😊 Positive": "#22c55e", "😠 Negative": "#ef4444"}
             fig = px.pie(counts, names="Sentiment", values="Count",
                          title=f"Sentiment — {i+1} tweets processed",
                          color="Sentiment",
@@ -113,24 +120,25 @@ with tab2:
                 with col_a:
                     st.plotly_chart(fig, use_container_width=True)
                 with col_b:
-                    st.dataframe(df_hist[["Tweet #","Tweet","Sentiment"]],
-                                 use_container_width=True, height=300)
-            prog.progress((i+1)/n_tweets)
+                    st.dataframe(
+                        df_hist[["Tweet #", "Tweet", "Sentiment"]],
+                        use_container_width=True, height=300)
+            prog.progress((i + 1) / n_tweets)
             time.sleep(0.3)
         st.success("Simulation complete!")
 
 with tab3:
     st.subheader("Model performance comparison")
     comp = pd.DataFrame({
-        "Model":          ["Logistic Regression", "Naïve Bayes"],
-        "Accuracy":       ["~82%", "~80%"],
-        "F1-Score":       ["~0.82", "~0.80"],
-        "Training Time":  ["< 1 min", "< 30 sec"],
-        "Interpretable":  ["Yes", "Yes"],
+        "Model":         ["Logistic Regression", "Naïve Bayes"],
+        "Accuracy":      ["~82%", "~80%"],
+        "F1-Score":      ["~0.82", "~0.80"],
+        "Train Time":    ["< 1 min", "< 30 sec"],
+        "Interpretable": ["Yes", "Yes"],
     })
     st.dataframe(comp, use_container_width=True, hide_index=True)
-    st.info("Logistic Regression wins — fast, interpretable, and 82% accurate.")
-    st.success("Next upgrade: BERTweet transformer for 90%+ accuracy.")
+    st.info("💡 Logistic Regression — fast, interpretable, 82% accurate.")
+    st.success("🚀 Next upgrade: BERTweet transformer for 90%+ accuracy.")
     st.markdown("### Confusion Matrices")
     col1, col2 = st.columns(2)
     with col1:
