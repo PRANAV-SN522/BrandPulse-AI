@@ -22,68 +22,90 @@ st.set_page_config(
 st.markdown("""
 <style>
     .block-container { padding-top: 1rem; }
+
     .hero-banner {
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border: 1px solid #334155;
-        border-radius: 16px;
-        padding: 30px 40px;
-        margin-bottom: 20px;
+        border: 1px solid #3b82f6;
+        border-radius: 20px;
+        padding: 36px 40px;
+        margin-bottom: 24px;
         text-align: center;
     }
     .hero-title {
-        font-size: 2.8rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
+        letter-spacing: -1px;
     }
     .hero-sub {
         color: #94a3b8;
         font-size: 1.1rem;
+        margin: 4px 0;
+    }
+    .section-heading {
+        font-size: 1.6rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: block;
+        margin-bottom: 6px;
     }
     .stat-box {
-        background: #1e293b;
-        border-radius: 12px;
-        padding: 20px;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border-radius: 14px;
+        padding: 22px;
         text-align: center;
         border: 1px solid #334155;
-        height: 100%;
     }
     .stat-box h2 {
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 800;
         color: #3b82f6;
         margin: 0;
     }
     .stat-box p {
         color: #94a3b8;
-        margin: 4px 0 0 0;
+        margin: 6px 0 0 0;
         font-size: 0.9rem;
     }
     .metric-card {
         background: linear-gradient(135deg, #1e293b, #0f172a);
         border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 24px;
+        border-radius: 14px;
+        padding: 28px;
         text-align: center;
         margin: 8px 0;
     }
-    .metric-card h4 { color: #94a3b8; margin: 0 0 8px 0; }
-    .metric-card h2 { margin: 0 0 4px 0; font-size: 1.8rem; }
+    .metric-card h4 { color: #94a3b8; margin: 0 0 10px 0; font-size:1rem; }
+    .metric-card h2 { margin: 0 0 6px 0; font-size: 1.9rem; }
     .metric-card p  { color: #64748b; margin: 0; font-size: 0.9rem; }
     .model-box {
         background: #1e293b;
-        border-radius: 12px;
-        padding: 20px;
+        border-radius: 14px;
+        padding: 22px;
         text-align: center;
         border: 1px solid #334155;
         height: 100%;
     }
-    .model-box h3 { margin: 0 0 8px 0; }
-    .model-box h2 { margin: 0 0 4px 0; font-size: 2rem; }
-    .model-box p  { color: #94a3b8; margin: 0; font-size: 0.85rem; }
+    .model-box h3 { margin: 0 0 10px 0; }
+    .model-box h2 { margin: 0 0 6px 0; font-size: 2.2rem; }
+    .model-box p  { color: #94a3b8; margin: 4px 0; font-size: 0.88rem; }
+    .tab-heading {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-bottom: 4px;
+    }
+    .tab-sub {
+        color: #64748b;
+        font-size: 0.95rem;
+        margin-bottom: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -99,7 +121,6 @@ lr_model, nb_model, tfidf_vec = load_models()
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words("english"))
 
-# ── Clean & predict ───────────────────────────────────────────────────────────
 def clean_tweet(text):
     if not isinstance(text, str): return ""
     text = text.lower()
@@ -139,6 +160,13 @@ SAMPLE_TWEETS = [
     "Smooth landing and excellent in-flight entertainment!",
 ]
 
+EXAMPLES = [
+    "Amazing flight, loved every moment! Best airline ever!",
+    "Worst airline ever, never flying again. Total disaster!",
+    "The flight was delayed by 3 hours with no explanation.",
+    "Staff were so kind and helpful throughout the journey!",
+]
+
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## 🔍 BrandPulse AI")
@@ -174,7 +202,7 @@ st.markdown("""
 <div class="hero-banner">
     <span class="hero-title">🔍 BrandPulse AI</span>
     <p class="hero-sub">Real-time Tweet Sentiment Analysis powered by Classical NLP</p>
-    <p class="hero-sub">Trained on 100,000 tweets · Logistic Regression · Naïve Bayes · BiLSTM</p>
+    <p class="hero-sub">Trained on 100,000 tweets &nbsp;·&nbsp; Logistic Regression &nbsp;·&nbsp; Naïve Bayes &nbsp;·&nbsp; BiLSTM</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -207,45 +235,48 @@ tab1, tab2, tab3 = st.tabs([
 # TAB 1 — Live Predict
 # ═══════════════════════════════════════════════════════
 with tab1:
-    st.subheader("💬 Analyse any tweet instantly")
-    st.markdown("Type or paste any tweet below and get instant sentiment predictions from 2 models.")
+    st.markdown('<span class="section-heading">💬 Analyse Any Tweet Instantly</span>',
+                unsafe_allow_html=True)
+    st.markdown('<p class="tab-sub">Type a tweet or click an example below — '
+                'get instant predictions from 2 ML models.</p>',
+                unsafe_allow_html=True)
+
+    # ── Example buttons — FIX: use session state ──────────────────────────────
+    if "tweet_input" not in st.session_state:
+        st.session_state.tweet_input = "The service was absolutely amazing! 10/10 would recommend."
+
+    st.markdown("**💡 Click an example to try it:**")
+    ex_cols = st.columns(4)
+    ex_labels = ["😊 Amazing flight!", "😠 Worst ever!", "😐 Delayed again", "😊 Kind staff!"]
+    for i, (col, ex, label) in enumerate(zip(ex_cols, EXAMPLES, ex_labels)):
+        with col:
+            if st.button(label, key=f"ex_{i}", use_container_width=True):
+                st.session_state.tweet_input = ex
+
     st.markdown("")
 
-    col_input, col_examples = st.columns([2, 1])
+    # ── Text input uses session state ─────────────────────────────────────────
+    user_text = st.text_area(
+        "✏️ Enter your tweet:",
+        value=st.session_state.tweet_input,
+        height=120,
+        key="tweet_box"
+    )
 
-    with col_input:
-        user_text = st.text_area(
-            "✏️ Enter a tweet:",
-            "The service was absolutely amazing! 10/10 would recommend.",
-            height=130,
-            placeholder="Type any tweet here..."
-        )
-        analyse_btn = st.button(
-            "🔍 Analyse Sentiment",
-            type="primary",
-            use_container_width=True
-        )
+    analyse_btn = st.button(
+        "🔍 Analyse Sentiment",
+        type="primary",
+        use_container_width=True
+    )
 
-    with col_examples:
-        st.markdown("**💡 Quick examples — click to try:**")
-        st.markdown("")
-        examples = [
-            "Amazing flight, loved every moment!",
-            "Worst airline ever, never again!",
-            "The flight was delayed by 3 hours.",
-            "Staff were so kind and helpful!",
-        ]
-        for ex in examples:
-            if st.button(ex, use_container_width=True, key=ex):
-                user_text = ex
-
-    if analyse_btn and user_text:
+    if analyse_btn and user_text.strip():
         with st.spinner("🧠 Analysing sentiment..."):
             results = predict(user_text)
             time.sleep(0.4)
 
         st.markdown("---")
-        st.markdown("### 🎯 Prediction Results")
+        st.markdown('<span class="section-heading">🎯 Prediction Results</span>',
+                    unsafe_allow_html=True)
 
         lr_color = "#22c55e" if results["lr"]["pred"] == 1 else "#ef4444"
         nb_color = "#22c55e" if results["nb"]["pred"] == 1 else "#ef4444"
@@ -274,7 +305,6 @@ with tab1:
         else:
             st.warning("⚠️ Models disagree — this tweet may be sarcastic or ambiguous.")
 
-        # Confidence chart
         fig = go.Figure(go.Bar(
             x=["Logistic Regression", "Naïve Bayes"],
             y=[results["lr"]["conf"]*100, results["nb"]["conf"]*100],
@@ -299,19 +329,20 @@ with tab1:
 # TAB 2 — Simulate Feed
 # ═══════════════════════════════════════════════════════
 with tab2:
-    st.subheader("📡 Simulate a live tweet feed")
-    st.markdown("Watch the sentiment distribution update in real time as tweets stream in.")
-    st.markdown("")
+    st.markdown('<span class="section-heading">📡 Live Tweet Feed Simulator</span>',
+                unsafe_allow_html=True)
+    st.markdown('<p class="tab-sub">Watch the sentiment distribution update in real time '
+                'as tweets stream in.</p>', unsafe_allow_html=True)
 
     col_a, col_b = st.columns([1, 2])
     with col_a:
         n_tweets = st.slider("📊 Number of tweets", 5, 30, 15)
-        speed    = st.selectbox("⚡ Simulation speed", ["Slow", "Normal", "Fast"])
+        speed    = st.selectbox("⚡ Speed", ["Slow", "Normal", "Fast"])
         delay    = {"Slow": 0.8, "Normal": 0.35, "Fast": 0.1}[speed]
     with col_b:
         st.info(
             f"Will simulate **{n_tweets} tweets** at **{speed}** speed.\n\n"
-            f"Watch the pie chart update live as each tweet is classified!"
+            "The pie chart and table update live as each tweet is classified!"
         )
 
     if st.button("▶  Run Simulation", type="primary", use_container_width=True):
@@ -337,7 +368,7 @@ with tab2:
 
             fig = px.pie(
                 counts, names="Sentiment", values="Count",
-                title=f"Live Sentiment Distribution — {i+1}/{n_tweets} tweets",
+                title=f"Live Sentiment — {i+1}/{n_tweets} tweets processed",
                 color="Sentiment", color_discrete_map=colors, hole=0.45
             )
             fig.update_layout(
@@ -372,8 +403,7 @@ with tab2:
         neg = n_tweets - pos
         st.balloons()
         st.success(
-            f"✅ Simulation complete! "
-            f"**{pos} Positive 😊** and **{neg} Negative 😠** "
+            f"✅ Done! **{pos} Positive 😊** and **{neg} Negative 😠** "
             f"out of {n_tweets} tweets."
         )
 
@@ -381,16 +411,17 @@ with tab2:
 # TAB 3 — Model Comparison
 # ═══════════════════════════════════════════════════════
 with tab3:
-    st.subheader("📊 Model Performance Comparison")
-    st.markdown("Comparing Classical NLP vs Deep Learning approaches.")
-    st.markdown("")
+    st.markdown('<span class="section-heading">📊 Model Performance Comparison</span>',
+                unsafe_allow_html=True)
+    st.markdown('<p class="tab-sub">Classical NLP vs Deep Learning — '
+                'trade-offs between speed, accuracy and interpretability.</p>',
+                unsafe_allow_html=True)
 
-    # Model cards
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("""
         <div class="model-box" style="border-top:4px solid #3b82f6">
-            <h3 style="color:#3b82f6">Logistic Regression</h3>
+            <h3 style="color:#3b82f6">🤖 Logistic Regression</h3>
             <h2 style="color:#22c55e">82%</h2>
             <p>Accuracy</p><br>
             <p>F1-Score: <strong>0.82</strong></p>
@@ -402,7 +433,7 @@ with tab3:
     with col2:
         st.markdown("""
         <div class="model-box" style="border-top:4px solid #8b5cf6">
-            <h3 style="color:#8b5cf6">Naïve Bayes</h3>
+            <h3 style="color:#8b5cf6">📊 Naïve Bayes</h3>
             <h2 style="color:#22c55e">80%</h2>
             <p>Accuracy</p><br>
             <p>F1-Score: <strong>0.80</strong></p>
@@ -414,7 +445,7 @@ with tab3:
     with col3:
         st.markdown("""
         <div class="model-box" style="border-top:4px solid #f59e0b">
-            <h3 style="color:#f59e0b">BiLSTM</h3>
+            <h3 style="color:#f59e0b">🧠 BiLSTM</h3>
             <h2 style="color:#f59e0b">76%</h2>
             <p>Accuracy</p><br>
             <p>F1-Score: <strong>0.76</strong></p>
@@ -425,9 +456,9 @@ with tab3:
         """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<span class="section-heading">📈 Accuracy Bar Chart</span>',
+                unsafe_allow_html=True)
 
-    # Bar chart
-    st.markdown("### 📈 Accuracy Comparison")
     fig = go.Figure(go.Bar(
         x=["Logistic Regression", "Naïve Bayes", "BiLSTM (CPU)"],
         y=[82, 80, 76],
@@ -447,21 +478,21 @@ with tab3:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Table
-    st.markdown("### 🔍 Full Comparison Table")
+    st.markdown('<span class="section-heading">🔍 Full Comparison Table</span>',
+                unsafe_allow_html=True)
     comp = pd.DataFrame({
-        "Model":            ["Logistic Regression", "Naïve Bayes", "BiLSTM"],
-        "Accuracy":         ["82%", "80%", "76%"],
-        "F1-Score":         ["0.82", "0.80", "0.76"],
-        "Training Time":    ["< 1 min", "< 30 sec", "~8 min CPU"],
-        "Interpretable":    ["✅ Yes", "✅ Yes", "❌ No"],
-        "Context-aware":    ["❌ No", "❌ No", "✅ Yes"],
-        "Best for":         ["Production", "Quick baseline", "Large datasets"],
+        "Model":          ["Logistic Regression", "Naïve Bayes", "BiLSTM"],
+        "Accuracy":       ["82%", "80%", "76%"],
+        "F1-Score":       ["0.82", "0.80", "0.76"],
+        "Training Time":  ["< 1 min", "< 30 sec", "~8 min CPU"],
+        "Interpretable":  ["✅ Yes", "✅ Yes", "❌ No"],
+        "Context-aware":  ["❌ No", "❌ No", "✅ Yes"],
+        "Best for":       ["Production", "Quick baseline", "Large datasets"],
     })
     st.dataframe(comp, use_container_width=True, hide_index=True)
 
-    # Images
-    st.markdown("### 📸 Confusion Matrices")
+    st.markdown('<span class="section-heading">📸 Confusion Matrices</span>',
+                unsafe_allow_html=True)
     ci1, ci2 = st.columns(2)
     with ci1:
         st.image("confusion_matrices_classical.png",
@@ -472,8 +503,8 @@ with tab3:
                  caption="BiLSTM Training Curves — Accuracy & Loss",
                  use_column_width=True)
 
-    # Insights
-    st.markdown("### 💡 Key Insights")
+    st.markdown('<span class="section-heading">💡 Key Insights</span>',
+                unsafe_allow_html=True)
     st.info("🏆 **Winner: Logistic Regression** — 82% accuracy, fastest training, fully interpretable.")
-    st.warning("🧠 **BiLSTM potential** — Needs 1M+ tweets and GPU training to outperform classical models.")
+    st.warning("🧠 **BiLSTM potential** — Needs 1M+ tweets and GPU to outperform classical models.")
     st.success("🚀 **Future upgrade** — Fine-tune BERTweet transformer to push accuracy above 90%.")
