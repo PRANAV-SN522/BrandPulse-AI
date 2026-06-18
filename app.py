@@ -18,11 +18,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
     .block-container { padding-top: 1rem; }
-
     .hero-banner {
         background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         border: 1px solid #3b82f6;
@@ -95,12 +93,6 @@ st.markdown("""
     .model-box h3 { margin: 0 0 10px 0; }
     .model-box h2 { margin: 0 0 6px 0; font-size: 2.2rem; }
     .model-box p  { color: #94a3b8; margin: 4px 0; font-size: 0.88rem; }
-    .tab-heading {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #e2e8f0;
-        margin-bottom: 4px;
-    }
     .tab-sub {
         color: #64748b;
         font-size: 0.95rem;
@@ -109,7 +101,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── Load models ───────────────────────────────────────────────────────────────
 @st.cache_resource
 def load_models():
     lr    = pickle.load(open("lr_model.pkl",         "rb"))
@@ -166,6 +157,12 @@ EXAMPLES = [
     "The flight was delayed by 3 hours with no explanation.",
     "Staff were so kind and helpful throughout the journey!",
 ]
+
+EX_LABELS = ["😊 Amazing flight!", "😠 Worst ever!", "😐 Delayed again", "😊 Kind staff!"]
+
+# ── Session state init ────────────────────────────────────────────────────────
+if "tweet_input" not in st.session_state:
+    st.session_state["tweet_input"] = "The service was absolutely amazing! 10/10 would recommend."
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -237,30 +234,26 @@ tab1, tab2, tab3 = st.tabs([
 with tab1:
     st.markdown('<span class="section-heading">💬 Analyse Any Tweet Instantly</span>',
                 unsafe_allow_html=True)
-    st.markdown('<p class="tab-sub">Type a tweet or click an example below — '
+    st.markdown('<p class="tab-sub">Type a tweet or click an example — '
                 'get instant predictions from 2 ML models.</p>',
                 unsafe_allow_html=True)
 
-    # ── Example buttons — FIX: use session state ──────────────────────────────
-    if "tweet_input" not in st.session_state:
-        st.session_state.tweet_input = "The service was absolutely amazing! 10/10 would recommend."
-
+    # Example buttons
     st.markdown("**💡 Click an example to try it:**")
     ex_cols = st.columns(4)
-    ex_labels = ["😊 Amazing flight!", "😠 Worst ever!", "😐 Delayed again", "😊 Kind staff!"]
-    for i, (col, ex, label) in enumerate(zip(ex_cols, EXAMPLES, ex_labels)):
+    for i, (col, ex, label) in enumerate(zip(ex_cols, EXAMPLES, EX_LABELS)):
         with col:
             if st.button(label, key=f"ex_{i}", use_container_width=True):
-                st.session_state.tweet_input = ex
+                st.session_state["tweet_input"] = ex
+                st.rerun()
 
     st.markdown("")
 
-    # ── Text input uses session state ─────────────────────────────────────────
+    # Text area — reads from session state
     user_text = st.text_area(
         "✏️ Enter your tweet:",
-        value=st.session_state.tweet_input,
-        height=120,
-        key="tweet_box"
+        value=st.session_state["tweet_input"],
+        height=120
     )
 
     analyse_btn = st.button(
@@ -458,7 +451,6 @@ with tab3:
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<span class="section-heading">📈 Accuracy Bar Chart</span>',
                 unsafe_allow_html=True)
-
     fig = go.Figure(go.Bar(
         x=["Logistic Regression", "Naïve Bayes", "BiLSTM (CPU)"],
         y=[82, 80, 76],
